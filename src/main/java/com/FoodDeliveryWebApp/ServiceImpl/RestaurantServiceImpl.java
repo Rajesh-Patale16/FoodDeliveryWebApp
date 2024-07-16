@@ -1,8 +1,10 @@
 package com.FoodDeliveryWebApp.ServiceImpl;
 
 import com.FoodDeliveryWebApp.CommanUtil.ValidationClass;
+import com.FoodDeliveryWebApp.Entity.Menu;
 import com.FoodDeliveryWebApp.Entity.Restaurant;
 import com.FoodDeliveryWebApp.Exception.RestaurantNotFoundException;
+import com.FoodDeliveryWebApp.Repository.MenuRepository;
 import com.FoodDeliveryWebApp.Repository.RestaurantRepository;
 import com.FoodDeliveryWebApp.ServiceI.RestaurantService;
 import org.slf4j.Logger;
@@ -12,7 +14,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.FoodDeliveryWebApp.CommanUtil.ValidationClass.*;
 
@@ -23,6 +28,9 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Autowired
     private RestaurantRepository restaurantRepository;
+
+    @Autowired
+    private MenuRepository menuRepository;
 
     @Override
     public Restaurant saveRestaurants(Restaurant restaurant) {
@@ -147,6 +155,37 @@ public class RestaurantServiceImpl implements RestaurantService {
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid rating format. Rating must be a valid numeric value.");
             }
+        }
+    }
+
+    @Override
+    public List<Restaurant> findRestaurantsByMenuName(String itemName) {
+        try {
+            List<Menu> menus = menuRepository.findByItemName(itemName);
+            if (menus == null || menus.isEmpty()) {
+                throw new RestaurantNotFoundException("No menus found with the name: " + itemName);
+            }
+            return menus.stream()
+                    .map(Menu::getRestaurant)
+                    .distinct()
+                    .collect(Collectors.toList());
+        } catch (RestaurantNotFoundException e) {
+            System.err.println(e.getMessage());
+            return Collections.emptyList();
+        } catch (Exception e) {
+            e.getCause().printStackTrace(System.err);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public Restaurant getRestaurantsById(Long restaurantId) {
+        logger.info("Getting restaurants by id: {}", restaurantId);
+        try {
+            return restaurantRepository.findById(restaurantId).orElseThrow(() ->
+                    new RestaurantNotFoundException("Restaurants not found"));
+        } catch(Exception | RestaurantNotFoundException e){
+            throw new RuntimeException("Failed to get restaurants", e);
         }
     }
 }

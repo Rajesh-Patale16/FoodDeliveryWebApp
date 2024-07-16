@@ -15,4 +15,8 @@ public interface RestaurantService {
     Restaurant updateRestaurant(Long restaurantId, Restaurant restaurant) throws RestaurantNotFoundException;
 
     void deleteRestaurant(Long restaurantId) throws RestaurantNotFoundException;
+
+    Restaurant getRestaurantsById(Long restaurantId) throws RestaurantNotFoundException;
+
+    List<Restaurant> findRestaurantsByMenuName(String itemName);
 }
