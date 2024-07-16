@@ -11,11 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
-
+import org.springframework.stereotype.Service;
 import java.util.List;
 
 import static com.FoodDeliveryWebApp.CommanUtil.ValidationClass.*;
 
+@Service
 public class RestaurantServiceImpl implements RestaurantService {
 
     private final Logger logger = LoggerFactory.getLogger(RestaurantService.class);
@@ -66,13 +67,13 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public Restaurant updateRestaurant(Long id, Restaurant restaurant) throws RestaurantNotFoundException {
-        if (id == null) {
+    public Restaurant updateRestaurant(Long restaurantId, Restaurant restaurant) throws RestaurantNotFoundException {
+        if (restaurantId == null) {
             throw new IllegalArgumentException("Id cannot be null");
         }
-        logger.info("Updating restaurant by id: {}, data: {}", id, restaurant);
+        logger.info("Updating restaurant by id: {}, data: {}", restaurantId, restaurant);
         try {
-            Restaurant existingRestaurant = restaurantRepository.findById(id)
+            Restaurant existingRestaurant = restaurantRepository.findById(restaurantId)
                     .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found"));
             // Update fields
             if (restaurant.getRestaurantName() != null) {
@@ -94,26 +95,26 @@ public class RestaurantServiceImpl implements RestaurantService {
         } catch (DataIntegrityViolationException e) {
             throw new RuntimeException("Failed to update restaurant due to data integrity violation", e);
         } catch (DataAccessException e) {
-            throw new RuntimeException("Failed to update restaurant with id: " + id, e);
+            throw new RuntimeException("Failed to update restaurant with id: " + restaurantId, e);
         }
     }
 
     @Override
-    public void deleteRestaurant(Long id) throws RestaurantNotFoundException {
+    public void deleteRestaurant(Long restaurantId) throws RestaurantNotFoundException {
 
-        if (id == null) {
+        if (restaurantId == null) {
             throw new IllegalArgumentException("Id cannot be null");
         }
-        logger.info("Deleting restaurant by id: {}", id);
+        logger.info("Deleting restaurant by id: {}", restaurantId);
         try {
-            Restaurant existingRestaurant = restaurantRepository.findById(id)
+            Restaurant existingRestaurant = restaurantRepository.findById(restaurantId)
                     .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found"));
-            restaurantRepository.deleteById(id);
-            logger.info("Successfully deleted restaurant with id: {}", id);
+            restaurantRepository.deleteById(restaurantId);
+            logger.info("Successfully deleted restaurant with id: {}", restaurantId);
         } catch (EmptyResultDataAccessException e) {
             throw new RestaurantNotFoundException("Restaurant not found"); // Handles case where findById doesn't throw
         } catch (DataAccessException e) {
-            throw new RuntimeException("Failed to delete restaurant with id: " + id, e); // Handles general database access errors
+            throw new RuntimeException("Failed to delete restaurant with id: " + restaurantId, e); // Handles general database access errors
         }
 
     }

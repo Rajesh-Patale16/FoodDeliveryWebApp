@@ -3,8 +3,12 @@ package com.FoodDeliveryWebApp.Repository;
 import com.FoodDeliveryWebApp.Entity.User;
 import jakarta.persistence.Id;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface UserRepository extends JpaRepository<User, Id> {
+import java.util.Optional;
 
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
 
+    Optional<User> findByUsernameAndPassword(String username, String password);
 }

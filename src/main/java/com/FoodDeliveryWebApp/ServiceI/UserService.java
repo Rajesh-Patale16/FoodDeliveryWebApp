@@ -1,18 +1,11 @@
 package com.FoodDeliveryWebApp.ServiceI;
 
 import com.FoodDeliveryWebApp.Entity.User;
-import org.springframework.stereotype.Service;
+import com.FoodDeliveryWebApp.Exception.UserNotFoundException;
 
-@Service
 public interface UserService {
 
-
-    public User saveUser(User user);
-
-
-
-    public User FindByUsername(String username);
-
-    public User fetchUserByEmailAndPassword(String email, String password);
+    User registerUser(User user);
+    User loginUser(String username, String password) throws UserNotFoundException;
 
 }
