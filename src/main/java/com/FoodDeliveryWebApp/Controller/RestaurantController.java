@@ -64,11 +64,11 @@ public class RestaurantController {
     }
 
     // To update restaurant details
-    @PutMapping("/restaurant/update/{id}")
-    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable("id") Long id,@RequestBody Restaurant restaurant) {
-        logger.info("Request to update restaurant with id: {}, data: {}", id, restaurant);
+    @PutMapping("/restaurant/update/{restaurantId}")
+    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable("restaurantId") Long restaurantId,@RequestBody Restaurant restaurant) {
+        logger.info("Request to update restaurant with id: {}, data: {}", restaurantId, restaurant);
         try {
-            return ResponseEntity.ok(restaurantService.updateRestaurant(id, restaurant));
+            return ResponseEntity.ok(restaurantService.updateRestaurant(restaurantId, restaurant));
         } catch (RestaurantNotFoundException e) {
             logger.error("Restaurants not found: {}", e.getMessage());
             return ResponseEntity.status(404).body(null);
@@ -82,11 +82,11 @@ public class RestaurantController {
     }
 
     // To delete restaurant details
-    @DeleteMapping("/restaurant/delete/{id}")
-    public ResponseEntity<Void> deleteRestaurant(@PathVariable("id") Long id) {
-        logger.info("Request to delete restaurant with id: {}", id);
+    @DeleteMapping("/restaurant/delete/{restaurantId}")
+    public ResponseEntity<Void> deleteRestaurant(@PathVariable("restaurantId") Long restaurantId) {
+        logger.info("Request to delete restaurant with id: {}", restaurantId);
         try {
-            restaurantService.deleteRestaurant(id);
+            restaurantService.deleteRestaurant(restaurantId);
             return ResponseEntity.noContent().build();
         } catch (RestaurantNotFoundException e) {
             logger.error("Restaurant not found: {}", e.getMessage());

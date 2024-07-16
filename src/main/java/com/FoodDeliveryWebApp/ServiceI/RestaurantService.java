@@ -2,11 +2,9 @@ package com.FoodDeliveryWebApp.ServiceI;
 
 import com.FoodDeliveryWebApp.Entity.Restaurant;
 import com.FoodDeliveryWebApp.Exception.RestaurantNotFoundException;
-
 import java.util.List;
 
 public interface RestaurantService {
-
 
     Restaurant saveRestaurants(Restaurant restaurant);
 
@@ -14,7 +12,7 @@ public interface RestaurantService {
 
     List<Restaurant> getAllRestaurants();
 
-    Restaurant updateRestaurant(Long id, Restaurant restaurant) throws RestaurantNotFoundException;
+    Restaurant updateRestaurant(Long restaurantId, Restaurant restaurant) throws RestaurantNotFoundException;
 
-    void deleteRestaurant(Long id) throws RestaurantNotFoundException;
+    void deleteRestaurant(Long restaurantId) throws RestaurantNotFoundException;
 }
