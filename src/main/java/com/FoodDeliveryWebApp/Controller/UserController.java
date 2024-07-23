@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/users")
 @CrossOrigin("*")
 public class UserController {
+    private static final String KEY = "rzp_test_tem0H7TFgmpa9q";
+    private static final String KEY_SECRET = "mJNWLwctr2HwRkC3480x1YXq";
+    private static final String CURRENCY = "INR";
 
     @Autowired
     private UserService userService;
@@ -39,5 +42,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
+
 
 }

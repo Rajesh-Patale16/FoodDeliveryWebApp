@@ -35,4 +35,10 @@ public class User {
     private String password;
 
     private String confirmPassword;
+//    @OneToMany
+//    @JoinColumn(
+//            name = "Transaction",referencedColumnName = "Id"
+//    )
+//
+//    private TransactiobDetails transactiobDetails;
 }
