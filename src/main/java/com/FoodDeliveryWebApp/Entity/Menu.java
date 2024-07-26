@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Menu {
+public class Menu  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,4 +27,11 @@ public class Menu {
     @JoinColumn(name = "restaurant_id")
     @JsonBackReference
     private Restaurant restaurant;
+
+
+    public Menu(String itemName, String description, Double price) {
+        this.itemName = itemName;
+        this.description = description;
+        this.price = price;
+    }
 }

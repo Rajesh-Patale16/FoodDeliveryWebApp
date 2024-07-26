@@ -1,25 +1,45 @@
 package com.FoodDeliveryWebApp.ServiceImpl;
 
 import com.FoodDeliveryWebApp.Entity.Menu;
+import com.FoodDeliveryWebApp.Entity.Restaurant;
 import com.FoodDeliveryWebApp.Exception.MenuNotFoundException;
+import com.FoodDeliveryWebApp.Exception.RestaurantNotFoundException;
 import com.FoodDeliveryWebApp.Repository.MenuRepository;
+import com.FoodDeliveryWebApp.Repository.RestaurantRepository;
 import com.FoodDeliveryWebApp.ServiceI.MenuService;
+import com.FoodDeliveryWebApp.dto.MenuDTO;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.FoodDeliveryWebApp.CommanUtil.ValidationClass.*;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class MenuServiceImpl implements MenuService {
 
     private final Logger logger = LoggerFactory.getLogger(MenuServiceImpl.class);
 
+    private static final String UPLOADED_FOLDER = "src/main/resources/static/images/";
+
     @Autowired
     private MenuRepository menuRepository;
+
+    @Autowired
+    RestaurantRepository restaurantRepository;
 
     public Menu saveMenu(Menu menu) {
         logger.info("Saving menu: {}", menu);
@@ -45,6 +65,16 @@ public class MenuServiceImpl implements MenuService {
         }
     }
 
+    @Override
+    public List<Menu> getItemNamesByRestaurantName(String restaurantName) throws RestaurantNotFoundException {
+        logger.info("Fetching menu items for restaurant name: {}", restaurantName);
+        List<Menu> menus = menuRepository.findByRestaurantName(restaurantName);
+        if (menus.isEmpty()) {
+            logger.error("No menus found for restaurant name: {}", restaurantName);
+            throw new MenuNotFoundException("No menu items found for restaurant name: " + restaurantName);
+        }
+        return menus.stream().map(menu->new Menu(menu.getItemName(),menu.getDescription(),menu.getPrice())).collect(Collectors.toList());
+    }
 
     @Override
     public Menu updateMenuByRestaurantIdAndItemName(Long restaurantId, String itemName, Menu menu) {
@@ -99,5 +129,13 @@ public class MenuServiceImpl implements MenuService {
         // Check if the price has more than 2 decimal places
         return Math.floor(price * 100) == price * 100;
     }
+
+
+
+
+
+
+
+
 
 }
