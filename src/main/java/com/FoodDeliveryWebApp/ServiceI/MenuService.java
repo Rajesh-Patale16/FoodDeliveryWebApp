@@ -2,10 +2,6 @@ package com.FoodDeliveryWebApp.ServiceI;
 
 import com.FoodDeliveryWebApp.Entity.Menu;
 import com.FoodDeliveryWebApp.Exception.RestaurantNotFoundException;
-import com.FoodDeliveryWebApp.dto.MenuDTO;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 import java.util.List;
 
 public interface MenuService {
