@@ -6,13 +6,17 @@ import com.FoodDeliveryWebApp.Exception.MenuNotFoundException;
 import com.FoodDeliveryWebApp.Exception.RestaurantNotFoundException;
 import com.FoodDeliveryWebApp.ServiceI.MenuService;
 import com.FoodDeliveryWebApp.ServiceI.RestaurantService;
+import com.FoodDeliveryWebApp.dto.MenuDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -65,6 +69,16 @@ public class MenuController {
         }
     }
 
+//    To get a restaurant name by item name
+    @GetMapping("/menu/items-by-restaurant/{restaurantName}")
+    public ResponseEntity<List<Menu>> getItemNamesByRestaurantName(@PathVariable String restaurantName) throws RestaurantNotFoundException {
+        logger.info("Received request to fetch item names for restaurant name: {}", restaurantName);
+
+            List<Menu> itemNames = menuService.getItemNamesByRestaurantName(restaurantName);
+            return ResponseEntity.ok(itemNames);
+
+    }
+
     @PutMapping("/menu/update/{restaurantId}/{itemName}")
     public ResponseEntity<?> updateMenuByRestaurantIdAndItemName(
             @PathVariable Long restaurantId, @PathVariable String itemName,  @RequestBody Menu menu) {
@@ -88,6 +102,6 @@ public class MenuController {
         }catch (MenuNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Menu not found for given menu id: {}"+menuId);
         }
-
     }
+
 }
