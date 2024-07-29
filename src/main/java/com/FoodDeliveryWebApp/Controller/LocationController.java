@@ -30,7 +30,7 @@ public class LocationController {
         }
     }
 
-    @PutMapping("/updateLocation/{locationId}")
+    @PutMapping("/Location/updateLocation/{locationId}")
     public ResponseEntity<Location> updateLocationByLocationId(@PathVariable Long locationId, @RequestBody Location location) {
         log.info("Request to update location with ID {}: {}", locationId, location);
         try {
@@ -42,7 +42,7 @@ public class LocationController {
         }
     }
 
-    @DeleteMapping("/deleteLocation/{locationId}")
+    @DeleteMapping("/Location/deleteLocation/{locationId}")
     public ResponseEntity<String> deleteByLocationId(@PathVariable Long locationId) {
         log.info("Request to delete location with ID {}", locationId);
         try {
