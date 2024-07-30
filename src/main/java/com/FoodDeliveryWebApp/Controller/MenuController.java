@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -97,6 +98,11 @@ public class MenuController {
         }catch (MenuNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Menu not found for given menu id: {}"+menuId);
         }
+
     }
 
+    @GetMapping("/find/{menuId}")
+    public Menu getMenu(@PathVariable Long menuId){
+        return menuService.getMenuById(menuId);
+    }
 }

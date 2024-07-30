@@ -1,18 +1,23 @@
 package com.FoodDeliveryWebApp.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Menu  {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Menu {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,4 +39,15 @@ public class Menu  {
         this.description = description;
         this.price = price;
     }
+
+    @OneToMany(mappedBy = "menu", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference(value = "menu_orderItem")
+    private List<OrderItem> orderItems;
+
+    @Enumerated(EnumType.STRING)
+    private Category category;
+
+    @OneToOne(mappedBy = "menuData")
+    @JsonBackReference(value = "menuData_profilePicture")
+    private ProfilePicture profilePicture;
 }
