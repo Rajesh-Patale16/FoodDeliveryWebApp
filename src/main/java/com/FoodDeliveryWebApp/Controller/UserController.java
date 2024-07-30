@@ -40,36 +40,5 @@ public class UserController {
         }
     }
 
-    // To update user details
-    @PutMapping("/user/update/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody User user) {
-        try {
-            if (userId == null) {
-                throw new IllegalArgumentException("User id cannot be null");
-            }
-            User updatedUser = userService.UpdateUserDetails(userId, user);
-            return ResponseEntity.ok(updatedUser);
-        } catch (UserNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with id: " + userId);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
-        }
-    }
-
-    // To delete user details by id
-    @DeleteMapping("/user/delete/{userId}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
-        try {
-            if (userId == null) {
-                throw new UserNotFoundException("User id cannot be null");
-            }
-            userService.deleteUser(userId);
-            return ResponseEntity.status(HttpStatus.OK).body("successfully deleted");
-        } catch (UserNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with id: " + userId);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
-        }
-    }
 
 }
