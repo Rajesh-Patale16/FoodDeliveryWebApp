@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -17,30 +17,29 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Menu {
+public class Orders {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long menuId;
+    private Long orderId;
 
-    @Column(name = "item_name")
-    private String itemName;
-    private String description;
-    private Double price;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus;;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    @JsonBackReference(value ="user_orders")
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "restaurant_id")
-    @JsonBackReference
+    @JsonBackReference(value ="restaurant_orders")
     private Restaurant restaurant;
 
-    @OneToMany(mappedBy = "menu", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference(value = "menu_orderItem")
+    @OneToMany(mappedBy = "order")
+    @JsonManagedReference(value ="order_orderItem")
     private List<OrderItem> orderItems;
 
-    @Enumerated(EnumType.STRING)
-    private Category category;
-
-    @OneToOne(mappedBy = "menuData")
-    @JsonBackReference(value = "menuData_profilePicture")
-    private ProfilePicture profilePicture;
+    private LocalDateTime orderDateAndTime;
 }
+

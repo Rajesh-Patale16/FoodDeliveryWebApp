@@ -90,4 +90,9 @@ public class MenuController {
         }
 
     }
+
+    @GetMapping("/find/{menuId}")
+    public Menu getMenu(@PathVariable Long menuId){
+        return menuService.getMenuById(menuId);
+    }
 }

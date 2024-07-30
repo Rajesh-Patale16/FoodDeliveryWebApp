@@ -1,12 +1,16 @@
 package com.FoodDeliveryWebApp.ServiceImpl;
 
 import com.FoodDeliveryWebApp.Entity.Menu;
+import com.FoodDeliveryWebApp.Entity.Restaurant;
 import com.FoodDeliveryWebApp.Exception.MenuNotFoundException;
+import com.FoodDeliveryWebApp.Exception.RestaurantNotFoundException;
 import com.FoodDeliveryWebApp.Repository.MenuRepository;
 import com.FoodDeliveryWebApp.ServiceI.MenuService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -59,6 +63,33 @@ public class MenuServiceImpl implements MenuService {
         Menu savedMenu = menuRepository.save(existingMenu);
         logger.info("Updated menu: {}", savedMenu);
         return savedMenu;
+    }
+
+    @Override
+    public Menu getMenuById(Long menuId) {
+        return menuRepository.findById(menuId).
+                orElseThrow(() -> new MenuNotFoundException("Menu not found"));
+    }
+
+    @Override
+    public Menu updateMenu(Long menuId, Menu menu) throws MenuNotFoundException {
+        if (menuId == null) {
+            throw new IllegalArgumentException("Id cannot be null");
+        }
+        try {
+            Menu existingMenu = menuRepository.findById(menuId)
+                    .orElseThrow(() -> new MenuNotFoundException("Restaurant not found"));
+            // Update fields
+            if (menu.getProfilePicture() != null) {
+                existingMenu.setProfilePicture(menu.getProfilePicture());
+            }
+            // Save and return updated menu
+            return menuRepository.save(existingMenu);
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("Failed to update restaurant due to data integrity violation", e);
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Failed to update restaurant with id: " + menuId, e);
+        }
     }
 
     @Override
