@@ -42,7 +42,6 @@ public class MenuController {
             logger.error("error saving menu", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-
     }
 
     @GetMapping("/menu/getAllMenus")
@@ -64,13 +63,13 @@ public class MenuController {
         }
     }
 
-//    To get a restaurant name by item name
+    //    To get a restaurant name by item name
     @GetMapping("/menu/items-by-restaurant/{restaurantName}")
     public ResponseEntity<List<Menu>> getItemNamesByRestaurantName(@PathVariable String restaurantName) throws RestaurantNotFoundException {
         logger.info("Received request to fetch item names for restaurant name: {}", restaurantName);
 
-            List<Menu> itemNames = menuService.getItemNamesByRestaurantName(restaurantName);
-            return ResponseEntity.ok(itemNames);
+        List<Menu> itemNames = menuService.getItemNamesByRestaurantName(restaurantName);
+        return ResponseEntity.ok(itemNames);
 
     }
 
@@ -97,6 +96,11 @@ public class MenuController {
         }catch (MenuNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Menu not found for given menu id: {}"+menuId);
         }
+
     }
 
+    @GetMapping("/find/{menuId}")
+    public Menu getMenu(@PathVariable Long menuId){
+        return menuService.getMenuById(menuId);
+    }
 }
