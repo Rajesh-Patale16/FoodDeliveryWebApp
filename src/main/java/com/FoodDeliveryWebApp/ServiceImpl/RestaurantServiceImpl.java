@@ -1,6 +1,7 @@
 package com.FoodDeliveryWebApp.ServiceImpl;
 
 import com.FoodDeliveryWebApp.CommanUtil.ValidationClass;
+import com.FoodDeliveryWebApp.Entity.Category;
 import com.FoodDeliveryWebApp.Entity.Menu;
 import com.FoodDeliveryWebApp.Entity.Restaurant;
 import com.FoodDeliveryWebApp.Exception.RestaurantNotFoundException;
@@ -14,11 +15,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import static com.FoodDeliveryWebApp.CommanUtil.ValidationClass.*;
 
 @Service
@@ -36,6 +36,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     public Restaurant saveRestaurants(Restaurant restaurant) {
         logger.info("Saving restaurants: {}", restaurant);
         try {
+            System.out.println(restaurant);
             validateRestaurantData(restaurant);
             return restaurantRepository.save(restaurant);
         } catch(IllegalArgumentException e){
@@ -47,8 +48,6 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public Restaurant getRestaurantsByName(String restaurantName) throws RestaurantNotFoundException {
-
-
         if (restaurantName == null || restaurantName.isEmpty()) {
             throw new IllegalArgumentException("Restaurant name cannot be null or empty");
         }
@@ -65,7 +64,6 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public List<Restaurant> getAllRestaurants() {
         logger.info("Getting all restaurants");
-
         try {
             return restaurantRepository.findAll();
         } catch (DataAccessException e) {
@@ -90,11 +88,14 @@ public class RestaurantServiceImpl implements RestaurantService {
             if (restaurant.getRestaurantAddress() != null) {
                 existingRestaurant.setRestaurantAddress(restaurant.getRestaurantAddress());
             }
+            if (restaurant.getRestaurantContactInfo() != null) {
+                existingRestaurant.setRestaurantContactInfo(restaurant.getRestaurantContactInfo());
+            }
             if (restaurant.getCuisines() != null) {
                 existingRestaurant.setCuisines(restaurant.getCuisines());
             }
-            if (restaurant.getRating() != null) {
-                existingRestaurant.setRating(restaurant.getRating());
+            if (restaurant.getCategory() != null) {
+                existingRestaurant.setCategory(restaurant.getCategory());
             }
             // Validate updated data
             validateRestaurantData(existingRestaurant);
@@ -133,7 +134,7 @@ public class RestaurantServiceImpl implements RestaurantService {
             throw new IllegalArgumentException("Invalid restaurant name format. Only alphanumeric characters, underscores, dots, @, -, spaces, and parentheses are allowed.");
         }
         if (restaurant.getRestaurantAddress() == null || !ADDRESS_PATTERN.matcher(restaurant.getRestaurantAddress()).matches()) {
-            throw new IllegalArgumentException("Invalid address format. Only alphanumeric characters, spaces, commas, periods, apostrophes, and hyphens are allowed.");
+            throw new IllegalArgumentException("Restaurant address cannot be null or empty.");
         }
         if (restaurant.getCuisines() == null || restaurant.getCuisines().isEmpty()) {
             throw new IllegalArgumentException("Cuisines list cannot be null or empty.");
@@ -144,22 +145,24 @@ public class RestaurantServiceImpl implements RestaurantService {
                 throw new IllegalArgumentException("Invalid cuisine format. Only alphabetic characters and spaces are allowed.");
             }
         }
-        if (restaurant.getRating() == null) {
-            throw new IllegalArgumentException("Rating cannot be null.");
-        } else {
-            String ratingString = restaurant.getRating().toString();
-            try {
-                if (!RATING_PATTERN.matcher(ratingString).matches()) {
-                    throw new IllegalArgumentException("Invalid rating format. Only numeric characters and a decimal point are allowed.");
-                }
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid rating format. Rating must be a valid numeric value.");
-            }
+        if (restaurant.getRestaurantContactInfo() == null || !RESTAURANT_CONTANCT_PATTERN.matcher(restaurant.getRestaurantContactInfo()).matches()) {
+            throw new IllegalArgumentException("Contact number should be valid.");
+        }
+        if (restaurant.getCategory() == null) {
+            throw new IllegalArgumentException("Order status must be VEG or NON_VEG.");
+        }
+
+        boolean isValidStatus = Arrays.stream(Category.values())
+                .anyMatch(status -> status.equals(restaurant.getCategory()));
+
+        if (!isValidStatus) {
+            throw new IllegalArgumentException("Order status must be VEG or NON_VEG.");
         }
     }
 
     @Override
     public List<Restaurant> findRestaurantsByMenuName(String itemName) {
+        logger.info("Finding restaurants by menu item name: {}", itemName);
         try {
             List<Menu> menus = menuRepository.findByItemName(itemName);
             if (menus == null || menus.isEmpty()) {
@@ -170,10 +173,10 @@ public class RestaurantServiceImpl implements RestaurantService {
                     .distinct()
                     .collect(Collectors.toList());
         } catch (RestaurantNotFoundException e) {
-            System.err.println(e.getMessage());
+            logger.error(e.getMessage());
             return Collections.emptyList();
         } catch (Exception e) {
-            e.getCause().printStackTrace(System.err);
+            logger.error("Failed to find restaurants by menu name: {}", itemName, e);
             return Collections.emptyList();
         }
     }
@@ -188,4 +191,5 @@ public class RestaurantServiceImpl implements RestaurantService {
             throw new RuntimeException("Failed to get restaurants", e);
         }
     }
+
 }
