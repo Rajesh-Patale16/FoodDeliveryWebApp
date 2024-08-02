@@ -4,10 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.util.List;
 
 @Entity
@@ -16,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
+@ToString(exclude = "reviews")
 public class Restaurant {
 
     @Id
@@ -44,4 +43,9 @@ public class Restaurant {
     @OneToOne(mappedBy = "restaurantData")
     @JsonBackReference(value = "restaurantData_profilePicture")
     private ProfilePicture profilePicture;
+
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference(value = "restaurant-reviews")
+    private List<Review> reviews;
 }
