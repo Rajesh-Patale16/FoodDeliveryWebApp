@@ -68,4 +68,8 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference(value = "user-reviews")
     private List<Review> reviews;
+
+
+
+
 }
