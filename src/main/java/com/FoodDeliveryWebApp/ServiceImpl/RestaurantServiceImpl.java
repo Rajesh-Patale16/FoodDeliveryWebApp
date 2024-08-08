@@ -148,15 +148,16 @@ public class RestaurantServiceImpl implements RestaurantService {
         if (restaurant.getRestaurantContactInfo() == null || !RESTAURANT_CONTANCT_PATTERN.matcher(restaurant.getRestaurantContactInfo()).matches()) {
             throw new IllegalArgumentException("Contact number should be valid.");
         }
-        if (restaurant.getCategory() == null) {
-            throw new IllegalArgumentException("Order status must be VEG or NON_VEG.");
+        if (restaurant.getCategory() == null || restaurant.getCategory().isEmpty()) {
+            throw new IllegalArgumentException("Category must contain at least one value.");
         }
 
-        boolean isValidStatus = Arrays.stream(Category.values())
-                .anyMatch(status -> status.equals(restaurant.getCategory()));
-
-        if (!isValidStatus) {
-            throw new IllegalArgumentException("Order status must be VEG or NON_VEG.");
+        for (Category category : restaurant.getCategory()) {
+            boolean isValidCategory = Arrays.stream(Category.values())
+                    .anyMatch(status -> status.equals(category));
+            if (!isValidCategory) {
+                throw new IllegalArgumentException("Category must be VEG or NON_VEG.");
+            }
         }
     }
 

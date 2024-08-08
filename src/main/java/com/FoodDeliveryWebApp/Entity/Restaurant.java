@@ -29,8 +29,11 @@ public class Restaurant {
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> cuisines;
 
+    @ElementCollection(targetClass = Category.class, fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private Category category;
+    @CollectionTable(name = "restaurant_category", joinColumns = @JoinColumn(name = "restaurant_id"))
+    @Column(name = "category")
+    private List<Category> category;
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference

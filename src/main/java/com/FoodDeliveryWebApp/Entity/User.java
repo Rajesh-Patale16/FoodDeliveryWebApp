@@ -41,6 +41,8 @@ public class User {
 
     private String confirmPassword;
 
+    private boolean verified = false;
+
 //    @OneToMany
 //    @JoinColumn(
 //            name = "Transaction",referencedColumnName = "Id"
@@ -69,7 +71,8 @@ public class User {
     @JsonManagedReference(value = "user-reviews")
     private List<Review> reviews;
 
-
+    @OneToOne
+    private ForgotPasswordOtp forgotPasswordOtp;
 
 
 }
