@@ -13,8 +13,8 @@ public class ValidationClass {
     public static final Pattern RESTAURANT_CONTANCT_PATTERN = Pattern.compile("^(?:\\d{10}|(?:\\d{3,5}-\\d{6,8}))$");
     public static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w-]+(\\.[\\w-]+)*@([\\w-]+\\.)+[a-zA-Z]{2,7}$");
     public static final Pattern GENDER_PATTERN = Pattern.compile("^(Male|Female|Other)$");
-    public static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$");
-    public static final Pattern USERNAME_PATTERN = Pattern.compile("^\\d{10}$|^([a-zA-Z0-9_.-]+)@([a-zA-Z0-9.-]+)\\.[a-zA-Z]{2,}$");
+    public static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[@#$%^&+=!])([a-zA-Z\\d@#$%^&+=!]{6,20})$");
+    public static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z]+$|^\\d{10}$");
     public static final Pattern PINCODE_PATTERN = Pattern.compile("^[0-9]{6}$");
     public static final Pattern MENU_ITEM_PATTERN = Pattern.compile("^[a-zA-Z0-9_.@\\- '()]*$");
     public static final Pattern QUANTITY_PATTERN = Pattern.compile("^[0-9]+$");
