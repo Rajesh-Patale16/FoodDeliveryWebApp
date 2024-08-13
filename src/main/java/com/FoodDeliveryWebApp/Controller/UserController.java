@@ -7,12 +7,15 @@ import com.FoodDeliveryWebApp.Exception.UserNotFoundException;
 import com.FoodDeliveryWebApp.Repository.ForgotPasswordOtpRepository;
 import com.FoodDeliveryWebApp.ServiceI.EmailService;
 import com.FoodDeliveryWebApp.ServiceI.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
@@ -31,22 +34,21 @@ public class UserController {
     @Autowired
     private ForgotPasswordOtpRepository otpRepository;
 
-
-//    @PostMapping("/user/register")
-//    public ResponseEntity<?> registerUser(@RequestBody User user) {
-//        try {
-//            User registeredUser = userService.registerUser(user);
-//            return ResponseEntity.ok(registeredUser);
-//        } catch (IllegalArgumentException e) {
-//            return ResponseEntity.badRequest().body(e.getMessage());
-//        } catch (Exception e) {
-//            return ResponseEntity.status(500).body("An unexpected error occurred: " + e.getMessage());
-//        }
-//    }
-
-    @PostMapping("/user/tempRegister")
-    public ResponseEntity<String> tempRegisterUser(@RequestBody User user) {
+    @PostMapping("/user/register")
+    public ResponseEntity<String> registerUser(@RequestPart("userData") String userData,
+                                               @RequestPart("profilePicture") MultipartFile multipartFile) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        User user = objectMapper.readValue(userData, User.class);
         try {
+            if (multipartFile != null && !multipartFile.isEmpty()) {
+                String contentType = multipartFile.getContentType();
+                if (contentType == null || isValidImageType(contentType)) {
+                    return ResponseEntity.badRequest().body("Invalid profile picture format. Only JPEG and PNG and png are supported.");
+                }
+                user.setProfilePicture(multipartFile.getBytes());
+            } else {
+                user.setProfilePicture(null);
+            }
             String message = userService.registerTemporaryUser(user);
             return ResponseEntity.ok(message);
         } catch (IllegalArgumentException e) {
@@ -56,8 +58,8 @@ public class UserController {
         }
     }
 
-    @PostMapping("/user/verifyToRegister")
-    public ResponseEntity<String> verifyUser(@RequestParam String email, @RequestParam String otp) {
+    @PostMapping("/user/verifyOtpToRegister")
+    public ResponseEntity<String> verifyUserOtpToRegister(@RequestParam String email, @RequestParam String otp) {
         try {
             String message = userService.verifyOtpToRegister(email, otp);
             return ResponseEntity.ok(message);
@@ -80,23 +82,34 @@ public class UserController {
         }
     }
 
-    // To update user details
     @PutMapping("/user/update/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@PathVariable Long userId,
+                                           @RequestPart("userData") String userData,
+                                           @RequestPart(value = "profilePicture", required = false) MultipartFile multipartFile) {
         try {
-            if (userId == null) {
-                throw new IllegalArgumentException("User id cannot be null");
+            ObjectMapper objectMapper = new ObjectMapper();
+            User user = objectMapper.readValue(userData, User.class);
+            if (multipartFile != null && !multipartFile.isEmpty()) {
+                String contentType = multipartFile.getContentType();
+                if (contentType == null || isValidImageType(contentType)) {
+                    return ResponseEntity.badRequest().body(null);
+                }
+                user.setProfilePicture(multipartFile.getBytes());
+            } else {
+                User existingUser = userService.getUserById(userId);
+                user.setProfilePicture(existingUser.getProfilePicture());
             }
+            // Update user details
             User updatedUser = userService.updateUserDetails(userId, user);
             return ResponseEntity.ok(updatedUser);
-        } catch (UserNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with id: " + userId);
+
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.badRequest().body(null);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
-    // To get user details by id
     @GetMapping("/user/getUserById/{userId}")
     public ResponseEntity<?> getUserById(@PathVariable Long userId) {
         try {
@@ -112,7 +125,6 @@ public class UserController {
         }
     }
 
-    // To delete user details by id
     @DeleteMapping("/user/delete/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         try {
@@ -147,19 +159,17 @@ public class UserController {
         }
     }
 
-    @PostMapping("/user/verifyOtp")
-    public ResponseEntity<String> validateOtp(@RequestParam String otp, @RequestParam String userEmail) {
+    @PostMapping("/user/verifyForgotPasswordOtp")
+    public ResponseEntity<String> validateForgotPasswordOtp(@RequestParam String otp, @RequestParam String userEmail) {
         logger.info("Received request to validate OTP: {} for email: {}", otp, userEmail);
 
         // Step 1: Check if the user exists
-        User user;
         try {
-            user = userService.getUserByEmail(userEmail);
+            User user = userService.getUserByEmail(userEmail);
         } catch (UserNotFoundException e) {
             logger.error("User not found with email: {}", userEmail, e);
             return ResponseEntity.status(404).body("User not found with email: " + userEmail);
         }
-
         // Step 2: Validate the OTP
         try {
             ForgotPasswordOtp passOtp = otpRepository.findByOtp(otp)
@@ -172,10 +182,9 @@ public class UserController {
                 logger.error("Expired OTP: {} for email: {}", otp, userEmail);
                 return ResponseEntity.status(400).body("OTP has expired");
             }
-
             // OTP is valid
             logger.info("OTP is valid for email: {}", userEmail);
-            return ResponseEntity.ok("OTP is valid");
+            return ResponseEntity.ok("OTP is verified, You can set new password ");
 
         } catch (IllegalArgumentException e) {
             logger.error("Invalid OTP: {} for email: {}", otp, userEmail, e);
@@ -187,48 +196,37 @@ public class UserController {
     }
 
 
-
     @PostMapping("/user/resetPassword/{userEmail}")
     public ResponseEntity<String> resetPassword(@PathVariable("userEmail") String userEmail,
                                                 @RequestBody PasswordResetRequest request) {
         String password = request.getPassword();
         String confirmPassword = request.getConfirmPassword();
-        String otp = request.getOtp();
 
         logger.info("Received request to reset password for email: {}", userEmail);
-
         // Step 1: Check if passwords match
         if (!password.equals(confirmPassword)) {
             logger.error("Passwords do not match for email: {}", userEmail);
             return ResponseEntity.status(400).body("Passwords do not match");
         }
-
         try {
-            // Step 3: Retrieve OTP and User
-            ForgotPasswordOtp passOtp = otpRepository.findByOtp(otp)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid OTP"));
-
-            // Verify user email matches
-            if (!passOtp.getUser().getEmail().equals(userEmail)) {
-                return ResponseEntity.status(400).body("OTP does not match the provided email");
-            }
-
-            // Step 4: Change the user's password
-            User user = passOtp.getUser();
+            // Step 2: Retrieve the user by email
+            User user = userService.getUserByEmail(userEmail);
+            // Step 3: Change the user's password
             userService.changeUserPassword(user, password);
-
-            // Optional: Clean up OTP record
-            otpRepository.delete(passOtp);
-
             return ResponseEntity.ok("Password successfully reset");
 
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid OTP: {} for email: {}", otp, userEmail, e);
-            return ResponseEntity.status(400).body("Invalid OTP");
+        } catch (UserNotFoundException e) {
+            logger.error("User not found with email: {}", userEmail, e);
+            return ResponseEntity.status(404).body("User not found with email: " + userEmail);
         } catch (Exception e) {
             logger.error("An error occurred while resetting password for email: {}", userEmail, e);
             return ResponseEntity.status(500).body("An unexpected error occurred.");
         }
     }
 
+    private  boolean isValidImageType(String contentType) {
+        return contentType.equalsIgnoreCase(".jpeg") ||
+                contentType.equalsIgnoreCase(".png") ||
+                contentType.equalsIgnoreCase(".jpg");
+    }
 }

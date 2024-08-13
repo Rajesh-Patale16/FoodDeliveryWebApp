@@ -12,12 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 import static com.FoodDeliveryWebApp.CommanUtil.ValidationClass.*;
 
@@ -33,18 +32,79 @@ public class RestaurantServiceImpl implements RestaurantService {
     private MenuRepository menuRepository;
 
     @Override
-    public Restaurant saveRestaurants(Restaurant restaurant) {
+    public Restaurant saveRestaurants(Restaurant restaurant, List<MultipartFile> imageFiles) {
         logger.info("Saving restaurants: {}", restaurant);
         try {
-            System.out.println(restaurant);
+            // Convert images to byte arrays and set them to the restaurant
+            List<byte[]> images = new ArrayList<>();
+            for (MultipartFile file : imageFiles) {
+                String contentType = file.getContentType();
+                if (contentType.equals("image/jpeg") || contentType.equals("image/png")) {
+                    images.add(file.getBytes());
+                } else {
+                    throw new IllegalArgumentException("Only PNG and JPEG images are supported");
+                }
+            }
+            restaurant.setImages(images);
+            // Validate and save the restaurant
             validateRestaurantData(restaurant);
             return restaurantRepository.save(restaurant);
-        } catch(IllegalArgumentException e){
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to process image files", e);
+        } catch (IllegalArgumentException e) {
             throw e;
-        } catch(Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("Failed to save restaurants", e);
         }
     }
+
+    @Override
+    public Restaurant updateRestaurant(Long restaurantId, Restaurant updatedRestaurantData, List<MultipartFile> imageFiles) throws RestaurantNotFoundException, IOException {
+        logger.info("Updating restaurant by id: {}, data: {}", restaurantId, updatedRestaurantData);
+
+        Restaurant existingRestaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found"));
+
+        // Update restaurant fields if provided
+        if (updatedRestaurantData.getRestaurantName() != null) {
+            existingRestaurant.setRestaurantName(updatedRestaurantData.getRestaurantName());
+        }
+        if (updatedRestaurantData.getRestaurantAddress() != null) {
+            existingRestaurant.setRestaurantAddress(updatedRestaurantData.getRestaurantAddress());
+        }
+        if (updatedRestaurantData.getRestaurantContactInfo() != null) {
+            existingRestaurant.setRestaurantContactInfo(updatedRestaurantData.getRestaurantContactInfo());
+        }
+        if (updatedRestaurantData.getCuisines() != null && !updatedRestaurantData.getCuisines().isEmpty()) {
+            existingRestaurant.setCuisines(updatedRestaurantData.getCuisines());
+        }
+        if (updatedRestaurantData.getCategory() != null && !updatedRestaurantData.getCategory().isEmpty()) {
+            existingRestaurant.setCategory(updatedRestaurantData.getCategory());
+        }
+
+        // Update images if provided
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            List<byte[]> images = new ArrayList<>();
+            for (MultipartFile file : imageFiles) {
+                String contentType = file.getContentType();
+                if (contentType != null && (contentType.equalsIgnoreCase("image/jpeg") ||
+                        contentType.equalsIgnoreCase("image/png") ||
+                        contentType.equalsIgnoreCase("image/jpg"))) {
+                    images.add(file.getBytes());
+                } else {
+                    throw new IllegalArgumentException("Only PNG and JPEG images are supported");
+                }
+            }
+            existingRestaurant.setImages(images);
+        }
+
+        try {
+            return restaurantRepository.save(existingRestaurant);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update restaurant", e);
+        }
+    }
+
 
     @Override
     public Restaurant getRestaurantsByName(String restaurantName) throws RestaurantNotFoundException {
@@ -69,42 +129,6 @@ public class RestaurantServiceImpl implements RestaurantService {
         } catch (DataAccessException e) {
             logger.error("Failed to get all restaurants: {}", e.getMessage());
             throw new RuntimeException("Failed to get all restaurants", e);
-        }
-    }
-
-    @Override
-    public Restaurant updateRestaurant(Long restaurantId, Restaurant restaurant) throws RestaurantNotFoundException {
-        if (restaurantId == null) {
-            throw new IllegalArgumentException("Id cannot be null");
-        }
-        logger.info("Updating restaurant by id: {}, data: {}", restaurantId, restaurant);
-        try {
-            Restaurant existingRestaurant = restaurantRepository.findById(restaurantId)
-                    .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found"));
-            // Update fields
-            if (restaurant.getRestaurantName() != null) {
-                existingRestaurant.setRestaurantName(restaurant.getRestaurantName());
-            }
-            if (restaurant.getRestaurantAddress() != null) {
-                existingRestaurant.setRestaurantAddress(restaurant.getRestaurantAddress());
-            }
-            if (restaurant.getRestaurantContactInfo() != null) {
-                existingRestaurant.setRestaurantContactInfo(restaurant.getRestaurantContactInfo());
-            }
-            if (restaurant.getCuisines() != null) {
-                existingRestaurant.setCuisines(restaurant.getCuisines());
-            }
-            if (restaurant.getCategory() != null) {
-                existingRestaurant.setCategory(restaurant.getCategory());
-            }
-            // Validate updated data
-            validateRestaurantData(existingRestaurant);
-            // Save and return updated restaurant
-            return restaurantRepository.save(existingRestaurant);
-        } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("Failed to update restaurant due to data integrity violation", e);
-        } catch (DataAccessException e) {
-            throw new RuntimeException("Failed to update restaurant with id: " + restaurantId, e);
         }
     }
 

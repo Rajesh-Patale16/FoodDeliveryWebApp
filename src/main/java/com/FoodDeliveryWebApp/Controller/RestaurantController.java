@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
@@ -21,12 +22,14 @@ public class RestaurantController {
     @Autowired
     private RestaurantService restaurantService;
 
-    // To save restaurant details
+    // Save restaurant with images
     @PostMapping("/restaurant/save")
-    public ResponseEntity<Restaurant> addRestaurant(@RequestBody Restaurant restaurant) {
+    public ResponseEntity<Restaurant> addRestaurant(
+            @RequestPart("restaurant") Restaurant restaurant,
+            @RequestPart("images") List<MultipartFile> imageFiles) {
         logger.info("Request to save restaurant: {}", restaurant);
         try {
-            return ResponseEntity.ok(restaurantService.saveRestaurants(restaurant));
+            return ResponseEntity.ok(restaurantService.saveRestaurants(restaurant, imageFiles));
         } catch (IllegalArgumentException e) {
             logger.error("Invalid restaurant data : {}", e.getMessage());
             return ResponseEntity.badRequest().body(null);
@@ -36,22 +39,44 @@ public class RestaurantController {
         }
     }
 
-    // To get restaurant details
+    // Update restaurant with images
+    @PutMapping(value = "/restaurant/update/{restaurantId}", consumes = "multipart/form-data")
+    public ResponseEntity<Restaurant> updateRestaurant(
+            @PathVariable("restaurantId") Long restaurantId,
+            @RequestPart("restaurant") Restaurant restaurant,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+        logger.info("Request to update restaurant with id: {}, data: {}", restaurantId, restaurant);
+        try {
+
+            return ResponseEntity.ok(restaurantService.updateRestaurant(restaurantId, restaurant, images));
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid restaurant data: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        } catch (RestaurantNotFoundException e) {
+            logger.error("Restaurant not found : {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            logger.error("Failed to update restaurant: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    // Get restaurant by name
     @GetMapping("/restaurant/find/{restaurantName}")
     public ResponseEntity<Restaurant> getRestaurantByName(@PathVariable("restaurantName") String restaurantName) {
         logger.info("Request to get restaurant by name: {}", restaurantName);
         try {
             return ResponseEntity.ok(restaurantService.getRestaurantsByName(restaurantName));
         } catch (RestaurantNotFoundException e) {
-            logger.error("Restaurant not found : {}", e.getMessage());
+            logger.error("Restaurant not found :- {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
-            logger.error("Failed to get restaurant: {}", e.getMessage());
+            logger.error("Failed to get restaurant : {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
-    // To get all restaurant details
+    // Get all restaurants
     @GetMapping("/restaurant/findAll")
     public ResponseEntity<List<Restaurant>> getAllRestaurants() {
         logger.info("Request to get all restaurants");
@@ -63,37 +88,46 @@ public class RestaurantController {
         }
     }
 
-    // To update restaurant details
-    @PutMapping("/restaurant/update/{restaurantId}")
-    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable("restaurantId") Long restaurantId,@RequestBody Restaurant restaurant) {
-        logger.info("Request to update restaurant with id: {}, data: {}", restaurantId, restaurant);
+    // Delete restaurant by ID
+    @DeleteMapping("/restaurant/delete/{restaurantId}")
+    public ResponseEntity<String> deleteRestaurant(@PathVariable("restaurantId") Long restaurantId) {
+        logger.info("Request to delete restaurant with id: {}", restaurantId);
         try {
-            return ResponseEntity.ok(restaurantService.updateRestaurant(restaurantId, restaurant));
+            restaurantService.deleteRestaurant(restaurantId);
+            return ResponseEntity.status(HttpStatus.OK).body("Restaurant deleted successfully.");
         } catch (RestaurantNotFoundException e) {
-            logger.error("Restaurants not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid restaurant data: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
+            logger.error("Restaurant not found - {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Restaurant not found.");
         } catch (Exception e) {
-            logger.error("Failed to update restaurant: {}", e.getMessage());
+            logger.error("Failed to delete restaurant: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete.");
+        }
+    }
+
+    // Find restaurants by menu item name
+    @GetMapping("/restaurant/findByMenuItem/{itemName}")
+    public ResponseEntity<List<Restaurant>> findRestaurantsByMenuName(@PathVariable("itemName") String itemName) {
+        logger.info("Request to find restaurants by menu item name: {}", itemName);
+        try {
+            return ResponseEntity.ok(restaurantService.findRestaurantsByMenuName(itemName));
+        } catch (Exception e) {
+            logger.error("Failed to find restaurants: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
-    // To delete restaurant details
-    @DeleteMapping("/restaurant/delete/{restaurantId}")
-    public ResponseEntity<Void> deleteRestaurant(@PathVariable("restaurantId") Long restaurantId) {
-        logger.info("Request to delete restaurant with id: {}", restaurantId);
+    // Get restaurant by ID
+    @GetMapping("/restaurant/findById/{restaurantId}")
+    public ResponseEntity<Restaurant> getRestaurantById(@PathVariable("restaurantId") Long restaurantId) {
+        logger.info("Request to get restaurant by id: {}", restaurantId);
         try {
-            restaurantService.deleteRestaurant(restaurantId);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(restaurantService.getRestaurantsById(restaurantId));
         } catch (RestaurantNotFoundException e) {
             logger.error("Restaurant not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
-            logger.error("Failed to delete restaurant: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            logger.error("Failed to get restaurant: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }

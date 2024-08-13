@@ -3,9 +3,9 @@ package com.FoodDeliveryWebApp.Entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +41,12 @@ public class User {
 
     private String confirmPassword;
 
+    @Lob
+    @Column(name = "profile_picture",columnDefinition = "LONGBLOB")
+    @Basic(fetch = FetchType.LAZY)
+    @Nullable
+    private byte[] profilePicture;
+
     private boolean verified = false;
 
 //    @OneToMany
@@ -63,16 +69,12 @@ public class User {
     @JsonManagedReference(value = "user_orderItem")
     private List<OrderItem> orderItems;
 
-    @OneToOne(mappedBy = "userData", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonBackReference(value = "userData_profilePicture")
-    private ProfilePicture profilePicture;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference(value = "user-reviews")
     private List<Review> reviews;
 
     @OneToOne
+    @Transient
     private ForgotPasswordOtp forgotPasswordOtp;
-
 
 }

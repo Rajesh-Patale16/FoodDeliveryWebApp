@@ -39,14 +39,6 @@ public class UserServiceImpl implements UserService {
 
     private final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
-//    @Override
-//    public User registerUser(User user) {
-//        validateUserData(user);
-//        if (!user.getPassword().equals(user.getConfirmPassword())) {
-//            throw new IllegalArgumentException("Passwords do not match");
-//        }
-//        return userRepository.save(user);
-//    }
 
     @Override
     @Transactional
@@ -69,7 +61,7 @@ public class UserServiceImpl implements UserService {
         tempUser.setConfirmPassword(user.getConfirmPassword());
         tempUser.setOtp(otp);
         tempUser.setOtpExpiry(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES)); // OTP expires in 10 minutes
-
+        tempUser.setProfilePicture(user.getProfilePicture());
         temporaryUserRepository.save(tempUser);
 
         emailService.sendEmail(user.getEmail(), "Your OTP Code", "Your OTP code is: " + otp);
@@ -100,6 +92,7 @@ public class UserServiceImpl implements UserService {
             user.setUsername(tempUser.getUsername());
             user.setPassword(tempUser.getPassword());
             user.setConfirmPassword(tempUser.getConfirmPassword());
+            user.setProfilePicture(tempUser.getProfilePicture());
             user.setVerified(true);
 
             userRepository.save(user);
@@ -142,6 +135,7 @@ public class UserServiceImpl implements UserService {
         if (user.getGender() != null) existingUser.setGender(user.getGender());
         if (user.getMobileNo() != null) existingUser.setMobileNo(user.getMobileNo());
         if (user.getAddress() != null) existingUser.setAddress(user.getAddress());
+        if (user.getProfilePicture()!= null) existingUser.setProfilePicture(user.getProfilePicture());
         if (user.getPassword() != null) existingUser.setPassword(user.getPassword());
 
         return userRepository.save(existingUser);
@@ -205,7 +199,6 @@ public class UserServiceImpl implements UserService {
         User user = getUserByEmail(email);
         String otp = generateOtp();
         createPasswordResetOtpForUser(user, otp);
-    //  emailService.sendEmail(user.getEmail(), "Your OTP Code", "Your OTP code is: " + otp);
         return otp;
     }
 

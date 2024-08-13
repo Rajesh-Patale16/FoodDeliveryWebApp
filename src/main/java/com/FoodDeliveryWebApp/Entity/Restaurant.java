@@ -3,6 +3,7 @@ package com.FoodDeliveryWebApp.Entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,6 +36,12 @@ public class Restaurant {
     @Column(name = "category")
     private List<Category> category;
 
+    @Lob
+    @ElementCollection
+    @CollectionTable(name = "restaurant_images", joinColumns = @JoinColumn(name = "restaurant_id"))
+    @Column(name = "image", columnDefinition = "LONGBLOB")
+    private List<byte[]> images;
+
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Menu> menus;
@@ -42,11 +49,6 @@ public class Restaurant {
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference(value = "restaurant_orders")
     private List<Orders> orders;
-
-    @OneToOne(mappedBy = "restaurantData")
-    @JsonBackReference(value = "restaurantData_profilePicture")
-    private ProfilePicture profilePicture;
-
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference(value = "restaurant-reviews")
