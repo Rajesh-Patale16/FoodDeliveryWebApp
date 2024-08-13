@@ -6,13 +6,20 @@ import com.FoodDeliveryWebApp.Exception.MenuNotFoundException;
 import com.FoodDeliveryWebApp.Exception.RestaurantNotFoundException;
 import com.FoodDeliveryWebApp.ServiceI.MenuService;
 import com.FoodDeliveryWebApp.ServiceI.RestaurantService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.DataInput;
+import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/menus")
@@ -27,8 +34,12 @@ public class MenuController {
     @Autowired
     private RestaurantService restaurantService;
 
-    @PostMapping("/menu/save/{restaurantId}")
-    public ResponseEntity<Menu> saveMenu(@PathVariable Long restaurantId, @RequestBody Menu menu) {
+    @PostMapping(value = "/menu/save/{restaurantId}", consumes = "multipart/form-data")
+    public ResponseEntity<Menu> addMenu(
+            @PathVariable Long restaurantId,
+            @RequestPart("menu") Menu menu,
+            @RequestPart("images") List<MultipartFile> imageFiles) {
+        logger.info("Request to save menu: {}", menu);
         try {
             Restaurant restaurant = restaurantService.getRestaurantsById(restaurantId);
             if (restaurant == null) {
@@ -36,11 +47,16 @@ public class MenuController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             }
             menu.setRestaurant(restaurant);
-            Menu save = menuService.saveMenu(menu);
-            return ResponseEntity.ok(save);
-        } catch (Exception | RestaurantNotFoundException e) {
-            logger.error("error saving menu", e);
+            Menu savedMenu = menuService.saveMenu(menu, imageFiles);
+            return ResponseEntity.ok(savedMenu);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid menu data: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            logger.error("Failed to save menu: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        } catch (RestaurantNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -73,23 +89,29 @@ public class MenuController {
 
     }
 
-    @PutMapping("/menu/update/{restaurantId}/{itemName}")
-    public ResponseEntity<?> updateMenuByRestaurantIdAndItemName(
-            @PathVariable Long restaurantId, @PathVariable String itemName,  @RequestBody Menu menu) {
-        logger.info("Received request to update menu with item name: {} for restaurant id: {}", itemName, restaurantId);
-        try{
-            Menu updatedMenu = menuService.updateMenuByRestaurantIdAndItemName(restaurantId, itemName, menu);
+    @PutMapping(value = "/menu/update/{restaurantId}/{itemName}", consumes = "multipart/form-data")
+    public ResponseEntity<Menu> updateMenuByRestaurantIdAndItemName(
+            @PathVariable Long restaurantId,
+            @PathVariable String itemName,
+            @RequestPart("menu") Menu updatedMenuData,
+            @RequestPart(value = "images", required = false) List<MultipartFile> imageFiles) {
+        logger.info("Request to update menu for restaurantId: {}, itemName: {}", restaurantId, itemName);
+        try {
+            Menu updatedMenu = menuService.updateMenuByRestaurantIdAndItemName(restaurantId, itemName, updatedMenuData, imageFiles);
             return ResponseEntity.ok(updatedMenu);
-        }catch (MenuNotFoundException e) {
-            logger.warn("Could not update item with given item name: {} for restaurant id: {}"+ itemName);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).
-                    body("Menu not found for given restaurant id: " + restaurantId + " and item name: " + itemName);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid menu data : {}", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            logger.error("Failed to update menu: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
+
     @DeleteMapping("/menu/delete/{menuId}")
     public ResponseEntity<String> deleteMenuByIdAndName(@PathVariable Long menuId) {
-        logger.info("Received request to delete menu id: {} with item name: {}", menuId);
+        logger.info("Received request to delete menu id: {} with item name", menuId);
         try{
             menuService.deleteMenuByIdAndName(menuId);
             return ResponseEntity.status(HttpStatus.OK).body("success");

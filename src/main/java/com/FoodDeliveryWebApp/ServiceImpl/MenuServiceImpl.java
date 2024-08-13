@@ -14,7 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import static com.FoodDeliveryWebApp.CommanUtil.ValidationClass.*;
 
@@ -33,16 +38,31 @@ public class MenuServiceImpl implements MenuService {
     @Autowired
     RestaurantRepository restaurantRepository;
 
-    public Menu saveMenu(Menu menu) {
+    @Override
+    public Menu saveMenu(Menu menu, List<MultipartFile> imageFiles) {
         logger.info("Saving menu: {}", menu);
-        try{
-            validationMenuData(menu);
+
+        try {
+            // Convert images to byte arrays and set them to the menu
+            List<byte[]> images = new ArrayList<>();
+            for (MultipartFile file : imageFiles) {
+                String contentType = file.getContentType();
+                if (contentType != null && (contentType.equals("image/jpeg") || contentType.equals("image/png"))) {
+                    images.add(file.getBytes());
+                } else {
+                    throw new IllegalArgumentException("Only PNG and JPEG images are supported");
+                }
+            }
+            menu.setImages(images);
+
+            // Validate and save the menu
+            validationMenuData(Optional.of(menu));
             return menuRepository.save(menu);
-        }catch (IllegalArgumentException e){
-            logger.error("Error saving menu");
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to process image files", e);
+        } catch (IllegalArgumentException e) {
             throw e;
-        }catch (Exception e){
-            logger.error("Failed to save menu: {}", e.getMessage());
+        } catch (Exception e) {
             throw new RuntimeException("Failed to save menu", e);
         }
     }
@@ -69,18 +89,41 @@ public class MenuServiceImpl implements MenuService {
     }
 
     @Override
-    public Menu updateMenuByRestaurantIdAndItemName(Long restaurantId, String itemName, Menu menu) {
-        logger.info("Updating menu with item name: {} for restaurant id: {}", itemName, restaurantId);
-        Menu existingMenu = menuRepository.findByRestaurantIdAndItemName(restaurantId, itemName)
-                .orElseThrow(() -> new MenuNotFoundException("Menu not found with name: " + itemName + " for restaurant id: " + restaurantId));
+    public Menu updateMenuByRestaurantIdAndItemName(Long restaurantId, String itemName, Menu updatedMenuData, List<MultipartFile> imageFiles) throws IOException {
+        logger.info("Updating menu for restaurantId: {}, itemName: {}", restaurantId, itemName);
 
-        existingMenu.setItemName(menu.getItemName());
-        existingMenu.setDescription(menu.getDescription());
-        existingMenu.setPrice(menu.getPrice());
+        Optional<Menu> existingMenuOptional = menuRepository.findByRestaurantIdAndItemName(restaurantId, itemName);
 
-        Menu savedMenu = menuRepository.save(existingMenu);
-        logger.info("Updated menu: {}", savedMenu);
-        return savedMenu;
+        if (existingMenuOptional.isEmpty()) {
+            throw new IllegalArgumentException("Menu item not found for the given restaurant and item name");
+        }
+        Menu existingMenu = existingMenuOptional.get();
+        // Update the menu details
+        existingMenu.setItemName(updatedMenuData.getItemName());
+        existingMenu.setPrice(updatedMenuData.getPrice());
+        existingMenu.setDescription(updatedMenuData.getDescription());
+        // Update images if provided
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            List<byte[]> images = new ArrayList<>();
+            for (MultipartFile file : imageFiles) {
+                String contentType = file.getContentType();
+                if (contentType != null && (contentType.equalsIgnoreCase("image/jpeg") || contentType.equalsIgnoreCase("image/png") || contentType.equalsIgnoreCase("image/jpg"))) {
+                    images.add(file.getBytes());
+                } else {
+                    throw new IllegalArgumentException("Only PNG and JPEG images are supported");
+                }
+            }
+            existingMenu.setImages(images);
+        }
+        // Validate and save the updated menu
+        validationMenuData(Optional.of(existingMenu));
+        try {
+            return menuRepository.save(existingMenu);
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update menu", e);
+        }
     }
 
     @Override
@@ -97,11 +140,6 @@ public class MenuServiceImpl implements MenuService {
         try {
             Menu existingMenu = menuRepository.findById(menuId)
                     .orElseThrow(() -> new MenuNotFoundException("Restaurant not found"));
-            // Update fields
-            if (menu.getProfilePicture() != null) {
-                existingMenu.setProfilePicture(menu.getProfilePicture());
-            }
-            // Save and return updated menu
             return menuRepository.save(existingMenu);
         } catch (DataIntegrityViolationException e) {
             throw new RuntimeException("Failed to update restaurant due to data integrity violation", e);
@@ -125,18 +163,27 @@ public class MenuServiceImpl implements MenuService {
         logger.info("Deleted menu id with item name: {}", menuId);
     }
 
-    public void validationMenuData(Menu menu){
-        if (menu.getItemName() == null || !MENU_ITEM_PATTERN.matcher(menu.getItemName()).matches()){
+    public void validationMenuData(Optional<Menu> menuOptional) {
+        if (menuOptional.isEmpty()) {
+            throw new IllegalArgumentException("Menu data cannot be empty");
+        }
+
+        Menu menu = menuOptional.get();
+
+        if (menu.getItemName() == null || menu.getItemName().isEmpty() || !MENU_ITEM_PATTERN.matcher(menu.getItemName()).matches()) {
             throw new IllegalArgumentException("Invalid item name. Item name should be alphanumeric and at least 5 characters long");
         }
+
         if (menu.getPrice() == null || !isValidPrice(menu.getPrice())) {
             throw new IllegalArgumentException("Invalid price. Price should be a valid decimal number with 2 decimal places");
         }
-        if(menu.getDescription() == null || !DESCRIPTION_PATTERN.matcher(menu.getDescription()).matches()){
+
+        if (menu.getDescription() == null || menu.getDescription().isEmpty() || !DESCRIPTION_PATTERN.matcher(menu.getDescription()).matches()) {
             throw new IllegalArgumentException("Invalid description. Description should be alphanumeric and at least 10 characters long");
         }
-        if(menu.getRestaurant() == null || menu.getRestaurant().getRestaurantId() == null){
-            throw new IllegalArgumentException("Restaurant id cannot be null");
+
+        if (menu.getRestaurant() == null || menu.getRestaurant().getRestaurantId() == null) {
+            throw new IllegalArgumentException("Restaurant ID cannot be null");
         }
     }
 

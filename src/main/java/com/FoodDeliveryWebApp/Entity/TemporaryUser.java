@@ -23,6 +23,10 @@ public class TemporaryUser {
     private String username;
     private String password;
     private String confirmPassword;
+    @Lob
+    @Column(name = "profile_picture", columnDefinition = "LONGBLOB")
+    private byte[] profilePicture;
+
     private String otp;
     private LocalDateTime otpExpiry;
 }

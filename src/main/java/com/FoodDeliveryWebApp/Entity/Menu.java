@@ -27,10 +27,19 @@ public class Menu  {
     private Double price;
 
     @ManyToOne
-    @JoinColumn(name = "restaurant_id")
+    @JoinColumn(name = "restaurant_id", nullable = false)
     @JsonBackReference
     private Restaurant restaurant;
 
+//    @ElementCollection
+//    @CollectionTable(name = "menu_images", joinColumns = @JoinColumn(name = "menu_id"))
+//    @Column(name = "image", columnDefinition = "LONGBLOB")
+//    private List<byte[]> images;
+
+    @Lob
+    @ElementCollection
+    @Column(columnDefinition = "LONGBLOB")
+    private List<byte[]> images;
 
     public Menu(String itemName, String description, Double price) {
         this.itemName = itemName;
@@ -44,11 +53,6 @@ public class Menu  {
 
     @Enumerated(EnumType.STRING)
     private Category category;
-
-    @OneToOne(mappedBy = "menuData")
-    @JsonBackReference(value = "menuData_profilePicture")
-    private ProfilePicture profilePicture;
-
 
     @OneToMany(mappedBy = "menu", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference(value = "menu-reviews")
