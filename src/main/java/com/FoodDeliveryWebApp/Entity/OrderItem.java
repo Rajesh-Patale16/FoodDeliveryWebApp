@@ -1,32 +1,28 @@
 package com.FoodDeliveryWebApp.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
+import lombok.*;
 
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString(exclude = {"menu", "order", "user"})
 public class OrderItem {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "menu_id")
     @JsonBackReference(value = "menu_orderItem")
     private Menu menu;
 
     @ManyToOne
-    @JsonBackReference(value = "order_orderItem")
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = true)
+    @JsonBackReference(value = "order_orderItems")
     private Orders order;
 
     @ManyToOne
@@ -41,5 +37,4 @@ public class OrderItem {
     private Double deliveryCharge;
     private Double platformCharge;
     private Double grandTotalPrice;
-
 }
