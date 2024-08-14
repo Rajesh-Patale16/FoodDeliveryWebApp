@@ -14,9 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reviews")
+@CrossOrigin("*")
 public class ReviewController {
     private static final Logger logger = LoggerFactory.getLogger(ReviewController.class);
 
@@ -72,10 +74,12 @@ public class ReviewController {
 
 
     @GetMapping("/Review/findAll")
-    public ResponseEntity<List<Review>> getAllReviews() {
+    public ResponseEntity<List<Map<String, Object>>> getAllReviews() {
         logger.info("Received request to get all reviews");
-        return ResponseEntity.ok(reviewService.getAllReviews());
+        List<Map<String, Object>> response = reviewService.getAllReviews();
+        return ResponseEntity.ok(response);
     }
+
 
 
     @GetMapping("/Review/findByRestaurant/{restaurantId}")
