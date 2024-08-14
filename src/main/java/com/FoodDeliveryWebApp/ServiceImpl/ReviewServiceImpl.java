@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -41,9 +44,35 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<Review> getAllReviews() {
+    public List<Map<String,Object>> getAllReviews() {
         logger.info("Fetching all reviews");
-        return reviewRepository.findAll();
+        List<Review> reviews = reviewRepository.findAll();
+        return reviews.stream().map(review -> {
+            Map<String, Object> reviewResponse = new HashMap<>();
+            reviewResponse.put("id", review.getId());
+            reviewResponse.put("reviewType", review.getReviewType());
+            reviewResponse.put("rating", review.getRating());
+            reviewResponse.put("comment", review.getComment());
+            reviewResponse.put("reviewDate", review.getReviewDate());
+            if (review.getRestaurant() != null) {
+                reviewResponse.put("restaurantName", review.getRestaurant().getRestaurantName());
+                reviewResponse.put("restaurantId", review.getRestaurant().getRestaurantId());
+            } else {
+                reviewResponse.put("restaurantName", null);
+                reviewResponse.put("restaurantId", null);
+            }
+
+            if (review.getMenu() != null) {
+                reviewResponse.put("menuName", review.getMenu().getItemName());
+                reviewResponse.put("menuId", review.getMenu().getMenuId());
+            } else {
+                reviewResponse.put("menuName", null);
+                reviewResponse.put("menuId", null);
+            }
+
+
+            return reviewResponse;
+        }).collect(Collectors.toList());
     }
 
     @Override
