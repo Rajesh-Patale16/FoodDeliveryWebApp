@@ -10,9 +10,9 @@ public interface ReviewService {
     Review saveReview(Review review);
     Review getReviewById(Long id) throws ReviewNotFoundException;
     List<Map<String, Object>> getAllReviews();
-    List<Review> getReviewsByRestaurantId(Long restaurantId) throws ReviewNotFoundException;
+    public List<Map<String,Object>>  getReviewsByRestaurantId(Long restaurantId) throws ReviewNotFoundException;
     List<Review> getReviewsByUserId(Long userId) throws ReviewNotFoundException;
-    List<Review> getReviewsByMenuId(Long menuId) throws ReviewNotFoundException;
+    public List<Map<String,Object>> getReviewsByMenuId(Long menuId) throws ReviewNotFoundException;
     Review updateReview(Long id, Review review) throws ReviewNotFoundException, IllegalArgumentException;
     void deleteReview(Long id) throws ReviewNotFoundException;
 }

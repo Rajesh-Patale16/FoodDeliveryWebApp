@@ -32,13 +32,17 @@ public class ReviewController {
     private RestaurantRepository restaurantRepository;
 
 
-    @PostMapping("/Review/menu/save/{menuId}")
-    public ResponseEntity<Review> addMenuReview(@PathVariable Long menuId, @RequestBody Review review) {
+    @PostMapping("/Review/menu/save/{menuId}/{restaurantId}")
+    public ResponseEntity<Review> addMenuReview(@PathVariable Long menuId,@PathVariable Long restaurantId, @RequestBody Review review) {
         logger.info("Received request to save menu review for menu ID: {}", menuId);
         try {
             Menu menu = menuRepository.findById(menuId)
                     .orElseThrow(() -> new IllegalArgumentException("Menu not found with ID: " + menuId));
             review.setMenu(menu);
+
+            Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Restaurant not found with ID: " + restaurantId));
+            review.setRestaurant(restaurant);
             return ResponseEntity.ok(reviewService.saveReview(review));
         } catch (IllegalArgumentException e) {
             logger.error("Invalid review: {}", e.getMessage());
@@ -83,10 +87,11 @@ public class ReviewController {
 
 
     @GetMapping("/Review/findByRestaurant/{restaurantId}")
-    public ResponseEntity<List<Review>> getReviewsByRestaurantId(@PathVariable Long restaurantId) {
+    public ResponseEntity<List<Map<String, Object>>> getReviewsByRestaurantId(@PathVariable Long restaurantId) {
         logger.info("Received request to get reviews for restaurant with id: {}", restaurantId);
         try {
-            return ResponseEntity.ok(reviewService.getReviewsByRestaurantId(restaurantId));
+            List<Map<String, Object>> response = reviewService.getReviewsByRestaurantId(restaurantId);
+            return ResponseEntity.ok(response);
         } catch (ReviewNotFoundException e) {
             logger.error("No reviews found for restaurant with id: {}", restaurantId);
             return ResponseEntity.status(404).body(null);
@@ -107,10 +112,11 @@ public class ReviewController {
 
 
     @GetMapping("/Review/findByMenu/{menuId}")
-    public ResponseEntity<List<Review>> getReviewsByMenuId(@PathVariable Long menuId) {
+    public ResponseEntity<List<Map<String, Object>>>  getReviewsByMenuId(@PathVariable Long menuId) {
         logger.info("Received request to get reviews for menu with id: {}", menuId);
         try {
-            return ResponseEntity.ok(reviewService.getReviewsByMenuId(menuId));
+            List<Map<String, Object>> response = reviewService.getReviewsByMenuId(menuId);
+            return ResponseEntity.ok(response);
         } catch (ReviewNotFoundException e) {
             logger.error("No reviews found for menu with id: {}", menuId);
             return ResponseEntity.status(404).body(null);
@@ -145,3 +151,4 @@ public class ReviewController {
         }
     }
 }
+
