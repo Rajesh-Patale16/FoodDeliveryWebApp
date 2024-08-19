@@ -23,8 +23,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Review saveReview(Review review) throws IllegalArgumentException {
-        validateReview(review);
-        if (review.getMenu() != null && review.getRestaurant() == null) {
+        if (review.getMenu() != null && review.getRestaurant() != null) {
             review.setReviewType("Menu");
         } else if (review.getRestaurant() != null && review.getMenu() == null) {
             review.setReviewType("Restaurant");
@@ -76,13 +75,26 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<Review> getReviewsByRestaurantId(Long restaurantId) throws ReviewNotFoundException {
-        logger.info("Fetching reviews for restaurant with id: {}", restaurantId);
+    public List<Map<String,Object>>  getReviewsByRestaurantId(Long restaurantId) throws ReviewNotFoundException {
+//
         List<Review> reviews = reviewRepository.findByRestaurantRestaurantId(restaurantId);
-        if (reviews.isEmpty()) {
-            throw new ReviewNotFoundException("No reviews found for restaurant with id : " + restaurantId);
-        }
-        return reviews;
+        return reviews.stream().map(review -> {
+            Map<String, Object> reviewResponse = new HashMap<>();
+            reviewResponse.put("id", review.getId());
+            reviewResponse.put("reviewType", review.getReviewType());
+            reviewResponse.put("rating", review.getRating());
+            reviewResponse.put("comment", review.getComment());
+            reviewResponse.put("reviewDate", review.getReviewDate());
+            if (review.getRestaurant() != null) {
+                reviewResponse.put("restaurantName", review.getRestaurant().getRestaurantName());
+                reviewResponse.put("restaurantId", review.getRestaurant().getRestaurantId());
+            } else {
+                reviewResponse.put("restaurantName", null);
+                reviewResponse.put("restaurantId", null);
+            }
+            return reviewResponse;
+        }).collect(Collectors.toList());
+
     }
 
     @Override
@@ -96,13 +108,35 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<Review> getReviewsByMenuId(Long menuId) throws ReviewNotFoundException {
+    public List<Map<String,Object>> getReviewsByMenuId(Long menuId) throws ReviewNotFoundException {
         logger.info("Fetching reviews for menu with id: {}", menuId);
         List<Review> reviews = reviewRepository.findByMenuMenuId(menuId);
-        if (reviews.isEmpty()) {
-            throw new ReviewNotFoundException("No reviews found for menu with id: " + menuId);
-        }
-        return reviews;
+        return reviews.stream().map(review -> {
+            Map<String, Object> reviewResponse = new HashMap<>();
+            reviewResponse.put("id", review.getId());
+            reviewResponse.put("reviewType", review.getReviewType());
+            reviewResponse.put("rating", review.getRating());
+            reviewResponse.put("comment", review.getComment());
+            reviewResponse.put("reviewDate", review.getReviewDate());
+            if (review.getRestaurant() != null) {
+                reviewResponse.put("restaurantName", review.getRestaurant().getRestaurantName());
+                reviewResponse.put("restaurantId", review.getRestaurant().getRestaurantId());
+            } else {
+                reviewResponse.put("restaurantName", null);
+                reviewResponse.put("restaurantId", null);
+            }
+
+            if (review.getMenu() != null) {
+                reviewResponse.put("menuName", review.getMenu().getItemName());
+                reviewResponse.put("menuId", review.getMenu().getMenuId());
+            } else {
+                reviewResponse.put("menuName", null);
+                reviewResponse.put("menuId", null);
+            }
+
+
+            return reviewResponse;
+        }).collect(Collectors.toList());
     }
 
     @Override
