@@ -48,13 +48,6 @@ public class User {
 
     private boolean verified = false;
 
-//    @OneToMany
-//    @JoinColumn(
-//            name = "Transaction",referencedColumnName = "Id"
-//    )
-//
-//    private TransactiobDetails transactiobDetails;
-
     //one user have many location
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -75,5 +68,11 @@ public class User {
     @OneToOne
     @Transient
     private ForgotPasswordOtp forgotPasswordOtp;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<Message> messages = new ArrayList<>();
+
+
 
 }
