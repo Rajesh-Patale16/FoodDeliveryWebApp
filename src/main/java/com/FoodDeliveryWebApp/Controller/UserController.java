@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.time.LocalDateTime;
 
 @RestController
@@ -58,8 +57,8 @@ public class UserController {
         }
     }
 
-    @PostMapping("/user/verifyOtpToRegister")
-    public ResponseEntity<String> verifyUserOtpToRegister(@RequestParam String email, @RequestParam String otp) {
+    @PostMapping("/user/verifyOtpToRegisterUser")
+    public ResponseEntity<String> verifyUserOtpToRegisterUser(@RequestParam String email, @RequestParam String otp) {
         try {
             String message = userService.verifyOtpToRegister(email, otp);
             return ResponseEntity.ok(message);
@@ -69,6 +68,7 @@ public class UserController {
             return ResponseEntity.status(500).body("An unexpected error occurred: " + e.getMessage());
         }
     }
+
 
     @PostMapping("/user/login/{username}/{password}")
     public ResponseEntity<?> loginUser(@PathVariable String username, @PathVariable String password) {
@@ -122,6 +122,18 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with id: " + userId);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/user/profilePicture/delete/{userId}")
+    public ResponseEntity<String> deleteProfilePicture(@PathVariable Long userId) {
+        try {
+            String message = userService.deleteProfilePicture(userId);
+            return ResponseEntity.ok(message);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("An unexpected error occurred: " + e.getMessage());
         }
     }
 

@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public String registerTemporaryUser(User user) {
         validateUserData(user);
-        if (!user.getPassword().equals(user.getConfirmPassword())) {
+        if (!user.getConfirmPassword().equals(user.getPassword())) {
             throw new IllegalArgumentException("Passwords do not match");
         }
 
@@ -64,7 +64,7 @@ public class UserServiceImpl implements UserService {
         tempUser.setProfilePicture(user.getProfilePicture());
         temporaryUserRepository.save(tempUser);
 
-        emailService.sendEmail(user.getEmail(), "Your OTP Code", "Your OTP code is: " + otp);
+        emailService.sendEmail(user.getEmail(), "Your OTP Code to register", "Your OTP code to register is: " + otp);
 
         return "Temporary user registered. Please verify OTP sent to your email.";
     }
@@ -104,6 +104,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+
     @Override
     public User loginUser(String username, String password) throws UserNotFoundException {
         return userRepository.findByUsernameAndPassword(username, password)
@@ -139,6 +140,20 @@ public class UserServiceImpl implements UserService {
         if (user.getPassword() != null) existingUser.setPassword(user.getPassword());
 
         return userRepository.save(existingUser);
+    }
+
+    @Override
+    @Transactional
+    public String deleteProfilePicture(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setProfilePicture(null); // Remove the profile picture
+            userRepository.save(user);
+            return "Profile picture deleted successfully.";
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
     }
 
     @Override
