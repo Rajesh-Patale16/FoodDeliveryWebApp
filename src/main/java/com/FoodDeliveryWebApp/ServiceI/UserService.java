@@ -4,6 +4,8 @@ import com.FoodDeliveryWebApp.Entity.User;
 import com.FoodDeliveryWebApp.Exception.UserNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 public interface UserService {
 
     String registerTemporaryUser(User user);
@@ -32,5 +34,7 @@ public interface UserService {
     User getUserByEmail(String email) throws UserNotFoundException;
 
     String requestPasswordReset(String email);
+
+    public List<User> getAllUsers();
 
 }

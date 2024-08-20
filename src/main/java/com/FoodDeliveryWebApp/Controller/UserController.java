@@ -1,11 +1,13 @@
 package com.FoodDeliveryWebApp.Controller;
 
 import com.FoodDeliveryWebApp.Entity.ForgotPasswordOtp;
+import com.FoodDeliveryWebApp.Entity.Message;
 import com.FoodDeliveryWebApp.Entity.PasswordResetRequest;
 import com.FoodDeliveryWebApp.Entity.User;
 import com.FoodDeliveryWebApp.Exception.UserNotFoundException;
 import com.FoodDeliveryWebApp.Repository.ForgotPasswordOtpRepository;
 import com.FoodDeliveryWebApp.ServiceI.EmailService;
+import com.FoodDeliveryWebApp.ServiceI.MessageService;
 import com.FoodDeliveryWebApp.ServiceI.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -26,6 +29,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private MessageService messageService;
 
     @Autowired
     private EmailService emailService;
@@ -240,5 +246,15 @@ public class UserController {
         return contentType.equalsIgnoreCase(".jpeg") ||
                 contentType.equalsIgnoreCase(".png") ||
                 contentType.equalsIgnoreCase(".jpg");
+    }
+    @GetMapping("/getalluserswithmsg")
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+    @GetMapping("/messages/{userId}")
+    public ResponseEntity<List<Message>> getMessagesByUserId(@PathVariable Long userId) {
+        List<Message> messages = messageService.getMessagesByUserId(userId);
+        return ResponseEntity.ok(messages);
     }
 }
