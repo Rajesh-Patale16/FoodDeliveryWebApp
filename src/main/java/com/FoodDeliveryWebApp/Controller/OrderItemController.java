@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orderItems")
@@ -100,8 +101,8 @@ public class OrderItemController {
     public ResponseEntity<?> getOrderById(@PathVariable Long id) {
         try {
             logger.info("Fetching order item with ID: {}", id);
-            OrderItem orderItem = orderItemService.getOrderItemById(id);
-            return ResponseEntity.ok(orderItem);
+            Map<String, Object> orderItemResponse = orderItemService.getOrderItemById(id);
+            return ResponseEntity.ok(orderItemResponse);
         } catch (OrderItemNotFoundException e) {
             logger.warn("Order item with ID {} not found", id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -111,12 +112,13 @@ public class OrderItemController {
         }
     }
 
+
     @GetMapping("/orders")
     public ResponseEntity<?> getAllOrders() {
         try {
             logger.info("Fetching all order items");
-            List<OrderItem> orderItems = orderItemService.getAllOrderItems();
-            return ResponseEntity.ok(orderItems);
+            List<Map<String, Object>> orderItemsResponse = orderItemService.getAllOrderItems();
+            return ResponseEntity.ok(orderItemsResponse);
         } catch (Exception e) {
             logger.error("Error while fetching all order items: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while fetching all order items");
