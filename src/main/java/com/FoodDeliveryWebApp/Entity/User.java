@@ -73,8 +73,6 @@ public class User {
     @JsonManagedReference
     private List<Message> messages = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch=FetchType.LAZY)
-    @JsonManagedReference(value="user_subscription")
-    private List<Subscription> subscription;
+
 
 }
