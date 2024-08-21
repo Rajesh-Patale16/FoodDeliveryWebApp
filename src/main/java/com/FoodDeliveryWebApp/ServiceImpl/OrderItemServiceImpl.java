@@ -1,6 +1,8 @@
 package com.FoodDeliveryWebApp.ServiceImpl;
 
 import com.FoodDeliveryWebApp.Entity.OrderItem;
+import com.FoodDeliveryWebApp.Entity.Orders;
+import com.FoodDeliveryWebApp.Entity.User;
 import com.FoodDeliveryWebApp.Exception.OrderItemNotFoundException;
 import com.FoodDeliveryWebApp.Repository.OrderItemRepository;
 import com.FoodDeliveryWebApp.ServiceI.OrderItemService;
@@ -25,10 +27,28 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     @Override
     public OrderItem updateOrderItem(Long id, OrderItem orderItem) {
+
+        User user = new User();
         if (!orderItemRepository.existsById(id)) {
             throw new OrderItemNotFoundException("Order item not found");
         }
+        OrderItem existingOrderItem=orderItemRepository.findById(id).orElseThrow(() ->
+                new OrderItemNotFoundException("order item not found"));
         orderItem.setId(id);
+        orderItem.setUser(existingOrderItem.getUser());
+        orderItem.setQuantity(orderItem.getQuantity());
+        orderItem.setPrice(orderItem.getPrice());
+        orderItem.setTotalPrice(orderItem.getTotalPrice());
+        orderItem.setGst(orderItem.getGst());
+        orderItem.setGrandTotalPrice(orderItem.getGrandTotalPrice());
+        orderItem.setDeliveryCharge(orderItem.getDeliveryCharge());
+        orderItem.setPlatformCharge(orderItem.getPlatformCharge());
+        orderItem.setMenu(existingOrderItem.getMenu());
+
+
+       // orderItem.setUser((User) getOrderItemById(id));
+        //orderItem.getUser().getId();
+        //orderItem.setOrder();
         return orderItemRepository.save(orderItem);
     }
 
