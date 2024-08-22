@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/subscriptions")
@@ -49,4 +50,26 @@ public class SubscriptionController {
         subscriptionService.cancelSubscription(subscriptionId);
         return  ResponseEntity.status(HttpStatus.OK).body("Subscription cancelled");
     }
+
+    @GetMapping("/restaurant/{restaurantId}/user/{userId}")
+    public ResponseEntity<?> getSubscriptionsByRestaurantAndUser(
+            @PathVariable Long restaurantId, @PathVariable Long userId) {
+
+        // Validate the input parameters
+        if (restaurantId == null || userId == null) {
+            return new ResponseEntity<>("Restaurant ID and User ID must not be null", HttpStatus.BAD_REQUEST);
+        }
+
+        // Fetch subscriptions based on restaurantId and userId
+        List<Map<String,Object>> subscriptions = subscriptionService.getSubscriptionsByRestaurantAndUser(restaurantId, userId);
+
+        // Handle the case where no subscriptions are found
+        if (subscriptions.isEmpty()) {
+            return new ResponseEntity<>("No subscriptions found for the given Restaurant ID and User ID", HttpStatus.NOT_FOUND);
+        }
+
+        // Return the list of subscriptions with an OK status
+        return new ResponseEntity<>(subscriptions, HttpStatus.OK);
+    }
+
 }
